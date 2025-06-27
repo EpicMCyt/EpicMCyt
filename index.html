@@ -18,6 +18,7 @@
         
         main {
             position: relative;
+            perspective: 1200px; /* Perspektive für 3D-Effekt der Animation */
             overflow: hidden;
         }
 
@@ -34,21 +35,25 @@
             background-color: rgba(28, 28, 28, 0.8); /* Grauer Header mit Transparenz */
         }
 
-        /* Vereinfachte Seiten-Übergangsanimationen (Fade) */
+        /* Apple Store-ähnliche Seiten-Übergangsanimation */
         .page-content {
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0;
+            transform: scale(1.03); /* Startet leicht vergrößert */
             display: none;
             position: absolute;
             width: 100%;
+            backface-visibility: hidden; /* Verhindert flackern bei 3D-Transformationen */
         }
         .page-content.active {
             opacity: 1;
+            transform: scale(1); /* Endet bei normaler Größe */
             display: block;
             position: relative;
         }
         .page-content.exiting {
             opacity: 0;
+            transform: scale(0.97); /* Verkleinert sich leicht beim Verlassen */
             position: absolute;
         }
         
@@ -298,44 +303,43 @@ Auch der Server MC Rig, gestartet von Isefi kurz vor EpicMC, trug zur Geschichte
         let isTransitioning = false;
         function showPage(pageId) {
             if (isTransitioning) return;
-            isTransitioning = true;
-
-            const currentPage = document.querySelector('.page-content.active');
             const nextPage = document.getElementById(pageId);
-
-            if (currentPage === nextPage) {
-                isTransitioning = false;
-                return;
-            }
+            const currentPage = document.querySelector('.page-content.active');
+            if (currentPage === nextPage) return;
+            
+            isTransitioning = true;
 
             if (currentPage) {
                 currentPage.classList.add('exiting');
-                // The 'transitionend' event handles removing the classes after the animation finishes.
                 currentPage.addEventListener('transitionend', () => {
                     currentPage.classList.remove('active', 'exiting');
                 }, { once: true });
             }
             
-            // We use a small timeout to ensure the exit animation has started before the new page comes in.
             setTimeout(() => {
                 nextPage.classList.add('active');
                 window.scrollTo(0, 0);
                 isTransitioning = false;
-            }, 50); // A shorter delay works well for a simple fade.
+            }, 50); // Kleiner Timeout, damit die Animation sauber startet
         }
         
         // --- INITIAL PAGE LOAD ---
         document.getElementById('home').classList.add('active');
         
         // --- DATA ---
+        // ===================================================================
+        // HIER DEINE ADMIN-BILDER EINTRAGEN
+        // Füge eine URL zu deinem Bild hinzu. 
+        // Wenn du `img: null` lässt, wird der Minecraft-Skin verwendet.
+        // ===================================================================
         const admins = [
-            { name: 'lucajm1307', role: 'Owner & Entwickler' },
-            { name: 'Isefi112', role: 'Mitgründer & 1. Admin' },
-            { name: 'K77Justino', role: '2. Admin & Builder' },
-            { name: 'VtxNova', role: '3. Admin & Builder' },
-            { name: 'maximusmuellus', role: '4. Admin & Builder' },
-            { name: 'Fitzmauki', role: '5. Admin & Builder' },
-            { name: 'TwoJaguar', role: '6. Admin & Builder' }
+            { name: 'lucajm1307', role: 'Owner & Entwickler', img: null },
+            { name: 'Isefi112', role: 'Mitgründer & 1. Admin', img: 'URL_ZU_DEINEM_BILD.jpg' }, // Beispiel mit Bild
+            { name: 'K77Justino', role: '2. Admin & Builder', img: null },
+            { name: 'VtxNova', role: '3. Admin & Builder', img: null },
+            { name: 'maximusmuellus', role: '4. Admin & Builder', img: 'URL_ZU_DEINEM_BILD2.jpg' }, // Beispiel mit Bild
+            { name: 'Fitzmauki', role: '5. Admin & Builder', img: null },
+            { name: 'TwoJaguar', role: '6. Admin & Builder', img: null }
         ];
         
         const finishedMinigames = [
@@ -352,10 +356,17 @@ Auch der Server MC Rig, gestartet von Isefi kurz vor EpicMC, trug zur Geschichte
 
         // --- DYNAMIC CONTENT GENERATION ---
         function createAdminCard(admin) {
+            // Entscheidet, ob das eigene Bild oder der Minecraft-Skin geladen wird.
+            const imageUrl = admin.img ? admin.img : `https://mc-heads.net/avatar/${admin.name}/100`;
+            const fallbackImage = `https://mc-heads.net/avatar/MHF_Steve/100`; // Steve als finaler Fallback
+
             return `
                 <div class="gallery-item">
                     <div class="card shadow-lg rounded-xl p-6 text-center border border-gray-700 mx-2">
-                        <img src="https://mc-heads.net/avatar/${admin.name}/100" alt="Avatar von ${admin.name}" class="w-24 h-24 rounded-full mx-auto mb-4 shadow-md bg-gray-600">
+                        <img src="${imageUrl}" 
+                             alt="Avatar von ${admin.name}" 
+                             class="w-24 h-24 rounded-full mx-auto mb-4 shadow-md bg-gray-600 object-cover"
+                             onerror="this.onerror=null; this.src='${fallbackImage}';">
                         <h3 class="text-2xl font-bold">${admin.name}</h3>
                         <p class="text-blue-400 text-lg">${admin.role}</p>
                     </div>
